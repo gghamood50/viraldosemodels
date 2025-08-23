@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>VDM Sign In</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .error-message {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="inline-block p-3 bg-orange-100 rounded-full">
+                <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 11c0-3.314-2.686-6-6-6S0 7.686 0 11s2.686 6 6 6h12M12 11V0M12 11h12M12 23V11" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mt-4">Welcome Back</h2>
+            <p class="text-gray-600">Sign in to access Viral Dose Media OS.</p>
+        </div>
+        <form id="loginForm">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="email">Email Address</label>
+                <input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition" id="email" placeholder="admin@viraldosemedia.com" type="email" required/>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="password">Password</label>
+                <input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition" id="password" placeholder="password" type="password" required/>
+            </div>
+            <button class="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition duration-200" type="submit">Sign In</button>
+        </form>
+        <p id="errorMessage" class="error-message mt-4 text-center text-red-600 font-medium"></p>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+                apiKey: "AIzaSyCJOdrRcCU29DpuLBC7HEuQoeOiUuO-lcg",
+                authDomain: "viral-dose-media.firebaseapp.com",
+                projectId: "viral-dose-media",
+                storageBucket: "viral-dose-media.appspot.com",
+                messagingSenderId: "1019850695051",
+                appId: "1:1019850695051:web:82fe957a707654561c0f8e"
+            };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // --- UI Elements ---
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // --- Login Logic ---
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessage.style.display = 'none';
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Use sessionStorage to store user data for the session
+                sessionStorage.setItem('user', JSON.stringify({ uid: user.uid, email: user.email }));
+                window.location.href = 'ModelArea.html';
+
+            } catch (error) {
+                console.error("Error logging in: ", error);
+                errorMessage.textContent = "Invalid email or password.";
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

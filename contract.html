@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Your Contract</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style type="text/tailwindcss">
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f8fa;
+        }
+        :root {
+            --primary-color: #FFE500;
+            --primary-color-hover: #e6cf00;
+        }
+        .main-btn { background-color: var(--primary-color); color: #1a202c; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); transition: all 0.2s ease-in-out; }
+        .main-btn:hover { background-color: var(--primary-color-hover); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.1); }
+        .signature-pad {
+            border: 2px dashed #ccc;
+            border-radius: 0.5rem;
+            cursor: crosshair;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 2000;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .notification.success {
+            background-color: #48bb78;
+        }
+        .notification.error {
+            background-color: #f56565;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div id="model-signing-page" class="max-w-4xl mx-auto">
+        <div class="bg-white p-8 rounded-xl shadow-lg">
+            <div id="loading-state">
+                <h2 class="text-2xl font-bold text-gray-700">Loading contract...</h2>
+                <p class="text-gray-500">Please wait a moment.</p>
+            </div>
+
+            <div id="signing-content" class="hidden">
+                <h2 class="text-3xl font-bold mb-2">Review and Sign Your Contract</h2>
+                <p class="text-gray-500 mb-6">Please review the contract details below and provide your signature.</p>
+                
+                <div id="contract-preview" class="border rounded-lg p-6 mb-8 bg-gray-50">
+                    <!-- Contract details will be injected here -->
+                </div>
+
+                <h3 class="text-xl font-bold mb-4">Your Signature</h3>
+                <div class="bg-white p-4 border rounded-lg">
+                    <canvas id="model-signature-pad" class="signature-pad w-full h-48"></canvas>
+                </div>
+                <div class="flex justify-end items-center space-x-4 mt-4">
+                    <button id="clear-model-signature" class="bg-gray-200 text-gray-700 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg transition">Clear</button>
+                    <button id="submit-model-signature" class="main-btn">Apply Signature & Finalize</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="notification-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const { jsPDF } = window.jspdf;
+        let modelSignaturePad;
+        let db;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const contractTerms = [
+            "1. Parties Involved: This Agreement is between VD Smedia, a marketing agency based in the UAE, and the individual model named below.",
+            "2. Scope of Work: The Model agrees to participate in photo and/or video shoots as arranged by VD Smedia for its clients' content marketing needs.",
+            "3. Usage Rights: The Model grants VD Smedia and its clients perpetual, worldwide, and unrestricted rights to use all produced content for any purpose, including commercial, advertising, editorial, and social media, without any time limit.",
+            "4. Compensation: The Model shall be compensated as agreed upon before each project. Payment details will be specified per project basis.",
+            "5. Work Schedule & Deliverables: The shoot schedule, location, and expectations will be communicated and agreed upon before each session.",
+            "6. Confidentiality Clause: The Model agrees to keep all information related to the shoot, client, project, or content strictly confidential. The Model shall not disclose or share any behind-the-scenes content or final deliverables on social media or elsewhere unless written permission is provided by VD Smedia.",
+            "7. Content Ownership: All content created during the shoot shall remain the sole property of VD Smedia and/or its clients. The Model waives any rights, claims, or approvals over the content.",
+            "8. Model Release: The Model grants full rights to be photographed and/or recorded and waives any right to inspect or approve the final content.",
+            "9. Code of Conduct: The Model agrees to behave professionally, arrive on time, and follow reasonable directions provided during the shoot.",
+            "10. Termination Clause: VD Smedia may terminate this agreement at any time if the Model breaches any of its terms, including failure to appear, unprofessional conduct, or violation of confidentiality.",
+            "11. Legal & Jurisdiction: This Agreement shall be governed by the laws of the United Arab Emirates. Any disputes shall be settled in a court of competent jurisdiction in the UAE.",
+            "12. Signatures: By signing below, both parties agree to the terms and conditions of this agreement."
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const firebaseConfig = {
+                apiKey: "AIzaSyCJOdrRcCU29DpuLBC7HEuQoeOiUuO-lcg",
+                authDomain: "viral-dose-media.firebaseapp.com",
+                projectId: "viral-dose-media",
+                storageBucket: "viral-dose-media.firebasestorage.app",
+                messagingSenderId: "1019850695051",
+                appId: "1:1019850695051:web:82fe957a707654561c0f8e"
+            };
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+
+            const modelSignatureCanvas = document.getElementById('model-signature-pad');
+            modelSignaturePad = new SignaturePad(modelSignatureCanvas);
+            
+            document.getElementById('clear-model-signature').addEventListener('click', () => modelSignaturePad.clear());
+            document.getElementById('submit-model-signature').addEventListener('click', submitSignature);
+            
+            checkForModelSigningLink();
+        });
+
+        async function checkForModelSigningLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const contractId = urlParams.get('contractId');
+            if (contractId) {
+                const docRef = doc(db, `contracts`, contractId);
+                try {
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists() && docSnap.data().status === 'Awaiting Model Signature') {
+                        renderModelSigningPage({id: docSnap.id, ...docSnap.data()});
+                    } else {
+                        showNotification("Contract not found or already signed.", "error");
+                        document.getElementById('loading-state').innerHTML = `<h2 class="text-2xl font-bold text-red-600">Error</h2><p class="text-gray-500">This contract link is invalid or the contract has already been completed.</p>`;
+                    }
+                } catch (error) {
+                    console.error("Error fetching contract:", error);
+                    showNotification("Could not load contract. Please check the link and try again.", "error");
+                    document.getElementById('loading-state').innerHTML = `<h2 class="text-2xl font-bold text-red-600">Error</h2><p class="text-gray-500">Could not load the contract at this time.</p>`;
+                }
+            } else {
+                document.getElementById('loading-state').innerHTML = `<h2 class="text-2xl font-bold text-red-600">Invalid Link</h2><p class="text-gray-500">No contract ID was provided in the link.</p>`;
+            }
+        }
+
+        function renderModelSigningPage(contract) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('signing-content').classList.remove('hidden');
+
+            const previewContainer = document.getElementById('contract-preview');
+            previewContainer.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">Contract Details</h3>
+                <p><strong>Model:</strong> ${contract.modelName}</p>
+                <p><strong>Agency Representative:</strong> ${contract.agencyRepresentative}</p>
+                <p><strong>Date:</strong> ${contract.contractDate}</p>
+                <hr class="my-4">
+                <h4 class="font-bold mb-2 text-lg">Terms and Conditions</h4>
+                <ul class="list-decimal list-inside space-y-2 text-sm text-gray-600 mb-6">
+                    ${contractTerms.map(term => `<li>${term.substring(term.indexOf('.') + 2)}</li>`).join('')}
+                </ul>
+                <hr class="my-4">
+                <h4 class="font-bold mb-2">Admin Signature:</h4>
+                <img src="${contract.adminSignature}" class="border rounded-md max-w-xs">
+            `;
+            resizeCanvas(document.getElementById('model-signature-pad'), modelSignaturePad);
+        }
+
+        async function submitSignature() {
+            if (modelSignaturePad.isEmpty()) {
+                showNotification("Please provide your signature.", "error");
+                return;
+            }
+            const urlParams = new URLSearchParams(window.location.search);
+            const contractId = urlParams.get('contractId');
+            
+            const docRef = doc(db, `contracts`, contractId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                let contract = {id: docSnap.id, ...docSnap.data()};
+                contract.modelSignature = modelSignaturePad.toDataURL();
+                contract.status = `Signed by ${contract.modelName}`;
+                
+                await setDoc(docRef, {
+                    modelName: contract.modelName,
+                    agencyRepresentative: contract.agencyRepresentative,
+                    contractDate: contract.contractDate,
+                    status: contract.status,
+                    adminSignature: contract.adminSignature,
+                    modelSignature: contract.modelSignature
+                });
+                
+                generateFinalPdf(contract);
+                showNotification("Contract signed successfully! You can now close this page.", "success");
+                document.getElementById('submit-model-signature').disabled = true;
+            }
+        }
+
+        function generateFinalPdf(contract) {
+            const doc = new jsPDF();
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text("Model Agreement - VD Smedia", 105, 20, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`This Model Agreement ("Agreement") is made between VD Smedia ("Agency") and the undersigned model ("Model") as of the date of signing.`, 20, 35, { maxWidth: 170 });
+            
+            doc.text(contractTerms.map(t => t).join('\n\n'), 20, 50, { maxWidth: 170 });
+            
+            let finalY = 230;
+
+            // Column 1
+            doc.text("Model Name:", 20, finalY);
+            doc.text(contract.modelName, 20, finalY + 5);
+            doc.addImage(contract.modelSignature, 'PNG', 20, finalY + 10, 60, 15);
+            doc.text("Model Signature:", 20, finalY + 30);
+            doc.text(`Date: ${contract.contractDate}`, 20, finalY + 35);
+
+
+            // Column 2
+            doc.text("Agency Representative (VD Smedia):", 110, finalY);
+            doc.text(contract.agencyRepresentative, 110, finalY + 5);
+            doc.addImage(contract.adminSignature, 'PNG', 110, finalY + 10, 60, 15);
+            doc.text("Agency Signature:", 110, finalY + 30);
+            doc.text(`Date: ${contract.contractDate}`, 110, finalY + 35);
+            
+            doc.save(`Signed-Contract-${contract.modelName.replace(/\s/g, '_')}.pdf`);
+        }
+
+        function resizeCanvas(canvas, pad) {
+            const ratio =  Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            pad.clear();
+        }
+
+        const notificationContainer = document.getElementById('notification-container');
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notificationContainer.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.addEventListener('transitionend', () => notification.remove());
+            }, 5000);
+        };
+
+    </script>
+</body>
+</html>
