@@ -518,9 +518,9 @@
 
     <script type="module">
         // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
         // --- PDF Generation Library ---
         const { jsPDF } = window.jspdf;
@@ -537,18 +537,12 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // --- Firebase Initialization ---
             const firebaseConfig = {
-                apiKey: "AIzaSyCJOdrRcCU29DpuLBC7HEuQoeOiUuO-lcg",
-
-                authDomain: "viral-dose-media.firebaseapp.com",
-
-                projectId: "viral-dose-media",
-
-                storageBucket: "viral-dose-media.firebasestorage.app",
-
-                messagingSenderId: "1019850695051",
-
-                appId: "1:1019850695051:web:82fe957a707654561c0f8e"
-
+                apiKey: "AIzaSyBl-_h0gZvIwKqudXq-Tj4X3O9PzVYml3A",
+                authDomain: "viraldosemodels.firebaseapp.com",
+                projectId: "viraldosemodels",
+                storageBucket: "viraldosemodels.firebasestorage.app",
+                messagingSenderId: "1067901876974",
+                appId: "1:1067901876974:web:28e63a8fda4224967c91ff"
             };
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
