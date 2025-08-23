@@ -1,90 +1,190 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>VDM Sign In</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .error-message {
-            display: none;
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Viral Dose Models — Sign In</title>
+
+  <!-- Tailwind (dark, liquid-glass ready) -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet"/>
+  <!-- Icons (no emojis) -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+  <style>
+    :root { --vdm-yellow:#FFE500; }
+    html, body { height:100%; }
+    body { font-family: Inter, system-ui, sans-serif; }
+    .glass { background: rgba(20,20,25,.5); backdrop-filter: blur(16px); border:1px solid rgba(255,255,255,.08); }
+    .btn-main { background:var(--vdm-yellow); color:#101013; }
+  </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <div class="text-center mb-8">
-            <div class="inline-block p-3 bg-orange-100 rounded-full">
-                <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 11c0-3.314-2.686-6-6-6S0 7.686 0 11s2.686 6 6 6h12M12 11V0M12 11h12M12 23V11" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-800 mt-4">Welcome Back</h2>
-            <p class="text-gray-600">Sign in to access Viral Dose Media OS.</p>
+<body class="min-h-screen bg-[radial-gradient(1200px_800px_at_20%_-10%,#3b3b45_0%,#121217_40%,#0b0b0f_100%)] text-gray-100">
+
+  <div class="min-h-screen grid place-items-center p-6">
+    <div class="glass rounded-3xl p-8 md:p-10 w-full max-w-md shadow-2xl">
+      <div class="text-center mb-8">
+        <div class="mx-auto w-14 h-14 grid place-items-center rounded-2xl"
+             style="background:rgba(255,229,0,.12); border:1px solid rgba(255,229,0,.35);">
+          <span class="material-icons text-[var(--vdm-yellow)]">bolt</span>
         </div>
-        <form id="loginForm">
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2" for="email">Email Address</label>
-                <input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition" id="email" placeholder="admin@viraldosemedia.com" type="email" required/>
-            </div>
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2" for="password">Password</label>
-                <input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition" id="password" placeholder="password" type="password" required/>
-            </div>
-            <button class="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition duration-200" type="submit">Sign In</button>
-        </form>
-        <p id="errorMessage" class="error-message mt-4 text-center text-red-600 font-medium"></p>
+        <h1 class="mt-4 text-3xl font-extrabold tracking-tight">Viral Dose Models</h1>
+        <p class="text-sm text-gray-400">Sign in to access your studio OS.</p>
+      </div>
+
+      <form id="loginForm" class="space-y-4" novalidate>
+        <label class="block">
+          <span class="block text-sm font-medium mb-2">Email Address</span>
+          <input id="email" type="email" autocomplete="email" required
+                 placeholder="admin@viraldosemodels.com"
+                 class="w-full rounded-xl border border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-[var(--vdm-yellow)] px-4 py-3 placeholder:text-gray-500"/>
+        </label>
+
+        <label class="block">
+          <span class="block text-sm font-medium mb-2">Password</span>
+          <div class="relative">
+            <input id="password" type="password" autocomplete="current-password" required
+                   placeholder="••••••••"
+                   class="w-full rounded-xl border border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-[var(--vdm-yellow)] px-4 py-3 pr-11 placeholder:text-gray-500"/>
+            <button type="button" id="togglePw"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 bg-white/5 border border-white/10 text-xs">
+              <span class="material-icons text-sm align-middle">visibility</span>
+            </button>
+          </div>
+        </label>
+
+        <button type="submit" id="signinBtn"
+                class="btn-main w-full py-3 rounded-xl font-bold disabled:opacity-60 disabled:cursor-not-allowed">
+          <span class="inline-flex items-center justify-center gap-2">
+            <span class="material-icons text-base">login</span> Sign In
+          </span>
+        </button>
+
+        <p id="errorMessage" class="hidden text-center text-red-300 font-medium"></p>
+      </form>
+
+      <div class="mt-6 text-center text-[13px] text-gray-400">
+        <button id="forgotBtn" class="hover:text-gray-200 underline underline-offset-4">Forgot password?</button>
+      </div>
     </div>
+  </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+  <!-- Firebase (modular v12) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+      sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBl-_h0gZvIwKqudXq-Tj4X3O9PzVYml3A",
-            authDomain: "viraldosemodels.firebaseapp.com",
-            projectId: "viraldosemodels",
-            storageBucket: "viraldosemodels.firebasestorage.app",
-            messagingSenderId: "1067901876974",
-            appId: "1:1067901876974:web:28e63a8fda4224967c91ff"
-        };
+    // ✅ Using your actual project (no placeholders)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBl-_h0gZvIwKqudXq-Tj4X3O9PzVYml3A",
+      authDomain: "viraldosemodels.firebaseapp.com",
+      projectId: "viraldosemodels",
+      storageBucket: "viraldosemodels.firebasestorage.app",
+      messagingSenderId: "1067901876974",
+      appId: "1:1067901876974:web:28e63a8fda4224967c91ff"
+    };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-        // --- UI Elements ---
-        const loginForm = document.getElementById('loginForm');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const errorMessage = document.getElementById('errorMessage');
+    const $  = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 
-        // --- Login Logic ---
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorMessage.style.display = 'none';
-            const email = emailInput.value;
-            const password = passwordInput.value;
+    const form    = $('#loginForm');
+    const emailEl = $('#email');
+    const passEl  = $('#password');
+    const errEl   = $('#errorMessage');
+    const btn     = $('#signinBtn');
+    const togglePwBtn = $('#togglePw');
+    const forgotBtn   = $('#forgotBtn');
 
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+    // If already signed in, go straight to admin
+    onAuthStateChanged(auth, (user) => {
+      if (user) window.location.href = 'ModelArea.html';
+    });
 
-                // Use sessionStorage to store user data for the session
-                sessionStorage.setItem('user', JSON.stringify({ uid: user.uid, email: user.email }));
-                window.location.href = 'ModelArea.html';
+    togglePwBtn.addEventListener('click', () => {
+      const isPwd = passEl.type === 'password';
+      passEl.type = isPwd ? 'text' : 'password';
+      togglePwBtn.querySelector('.material-icons').textContent = isPwd ? 'visibility_off' : 'visibility';
+      passEl.focus();
+    });
 
-            } catch (error) {
-                console.error("Error logging in: ", error);
-                errorMessage.textContent = "Invalid email or password.";
-                errorMessage.style.display = 'block';
-            }
-        });
-    </script>
+    function setLoading(isLoading) {
+      btn.disabled = isLoading;
+      btn.innerHTML = isLoading
+        ? `<span class="inline-flex items-center justify-center gap-2">
+             <span class="material-icons animate-spin">progress_activity</span> Signing in…
+           </span>`
+        : `<span class="inline-flex items-center justify-center gap-2">
+             <span class="material-icons text-base">login</span> Sign In
+           </span>`;
+    }
+
+    function showError(msg) {
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+    }
+
+    function mapFirebaseError(e) {
+      const code = (e.code || '').toLowerCase();
+      if (code.includes('invalid-email')) return 'Please enter a valid email address.';
+      if (code.includes('user-not-found')) return 'No account found for this email.';
+      if (code.includes('wrong-password')) return 'Incorrect password. Please try again.';
+      if (code.includes('too-many-requests')) return 'Too many attempts. Try again later.';
+      if (code.includes('network-request-failed')) return 'Network error. Check your connection and try again.';
+      return 'Sign-in failed. Please try again.';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.classList.add('hidden');
+
+      const email = emailEl.value.trim();
+      const pass  = passEl.value;
+
+      if (!email || !pass) {
+        showError('Email and password are required.');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const { user } = await signInWithEmailAndPassword(auth, email, pass);
+        // Store minimal session info if you need it:
+        sessionStorage.setItem('user', JSON.stringify({ uid: user.uid, email: user.email }));
+        window.location.href = 'ModelArea.html';
+      } catch (err) {
+        console.error(err);
+        showError(mapFirebaseError(err));
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    forgotBtn.addEventListener('click', async () => {
+      errEl.classList.add('hidden');
+      const email = emailEl.value.trim();
+      if (!email) {
+        showError('Enter your email above, then click Forgot password.');
+        return;
+      }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        errEl.classList.remove('text-red-300');
+        errEl.classList.add('text-green-300');
+        errEl.textContent = 'Password reset email sent.';
+        errEl.classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        errEl.classList.remove('text-green-300');
+        errEl.classList.add('text-red-300');
+        showError(mapFirebaseError(err));
+      }
+    });
+  </script>
 </body>
 </html>
