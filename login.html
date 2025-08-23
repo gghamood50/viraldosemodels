@@ -1,83 +1,90 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Viral Dose Models — Sign In</title>
+  <title>Viral Dose Models — Contract</title>
 
-  <!-- Tailwind (dark, liquid-glass ready) -->
+  <!-- Tailwind + fonts + icons -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet"/>
-  <!-- Icons (no emojis) -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+  <!-- jsPDF & SignaturePad -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 
   <style>
     :root { --vdm-yellow:#FFE500; }
-    html, body { height:100%; }
     body { font-family: Inter, system-ui, sans-serif; }
-    .glass { background: rgba(20,20,25,.5); backdrop-filter: blur(16px); border:1px solid rgba(255,255,255,.08); }
+    .card { background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
     .btn-main { background:var(--vdm-yellow); color:#101013; }
+    #modelPad {
+        background-color: #ffffff;
+        border-radius: 0.75rem; /* rounded-xl */
+        border: 1px solid #d1d5db;
+    }
   </style>
 </head>
-<body class="min-h-screen bg-[radial-gradient(1200px_800px_at_20%_-10%,#3b3b45_0%,#121217_40%,#0b0b0f_100%)] text-gray-100">
+<body class="min-h-screen bg-gray-100 text-gray-800 p-4 md:p-6">
 
-  <div class="min-h-screen grid place-items-center p-6">
-    <div class="glass rounded-3xl p-8 md:p-10 w-full max-w-md shadow-2xl">
-      <div class="text-center mb-8">
-        <div class="mx-auto w-14 h-14 grid place-items-center rounded-2xl"
-             style="background:rgba(255,229,0,.12); border:1px solid rgba(255,229,0,.35);">
-          <span class="material-icons text-[var(--vdm-yellow)]">bolt</span>
+  <div class="max-w-4xl mx-auto">
+    <!-- Loading -->
+    <div id="loading" class="card rounded-2xl p-8">
+      <h2 class="text-2xl font-extrabold text-gray-900">Loading contract…</h2>
+      <p class="text-gray-500">Please wait a moment.</p>
+    </div>
+
+    <!-- Content -->
+    <div id="content" class="hidden card rounded-2xl p-6 md:p-8">
+      <h2 class="text-2xl md:text-3xl font-extrabold mb-1 text-gray-900">Review & Sign</h2>
+      <p class="text-sm text-gray-500 mb-6">Please review the details, then sign and confirm to finalize.</p>
+
+      <!-- Preview -->
+      <div id="preview" class="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6"></div>
+
+      <!-- Signature -->
+      <div>
+        <h3 class="text-xl font-bold mb-2 text-gray-900">Your Signature</h3>
+        <div>
+          <canvas id="modelPad" class="w-full h-48 md:h-56"></canvas>
         </div>
-        <h1 class="mt-4 text-3xl font-extrabold tracking-tight">Viral Dose Models</h1>
-        <p class="text-sm text-gray-400">Sign in to access your studio OS.</p>
-      </div>
-
-      <form id="loginForm" class="space-y-4" novalidate>
-        <label class="block">
-          <span class="block text-sm font-medium mb-2">Email Address</span>
-          <input id="email" type="email" autocomplete="email" required
-                 placeholder="admin@viraldosemodels.com"
-                 class="w-full rounded-xl border border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-[var(--vdm-yellow)] px-4 py-3 placeholder:text-gray-500"/>
-        </label>
-
-        <label class="block">
-          <span class="block text-sm font-medium mb-2">Password</span>
-          <div class="relative">
-            <input id="password" type="password" autocomplete="current-password" required
-                   placeholder="••••••••"
-                   class="w-full rounded-xl border border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-[var(--vdm-yellow)] px-4 py-3 pr-11 placeholder:text-gray-500"/>
-            <button type="button" id="togglePw"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 bg-white/5 border border-white/10 text-xs">
-              <span class="material-icons text-sm align-middle">visibility</span>
-            </button>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mt-3">
+          <div class="flex items-center gap-2">
+            <button id="clearSig" class="rounded-xl px-4 py-2 bg-gray-200 hover:bg-gray-300 border border-gray-300 text-gray-800">Clear</button>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input id="confirmBox" type="checkbox" class="accent-[var(--vdm-yellow)]">
+              <span>I confirm this is my signature.</span>
+            </label>
           </div>
-        </label>
-
-        <button type="submit" id="signinBtn"
-                class="btn-main w-full py-3 rounded-xl font-bold disabled:opacity-60 disabled:cursor-not-allowed">
-          <span class="inline-flex items-center justify-center gap-2">
-            <span class="material-icons text-base">login</span> Sign In
-          </span>
-        </button>
-
-        <p id="errorMessage" class="hidden text-center text-red-300 font-medium"></p>
-      </form>
-
-      <div class="mt-6 text-center text-[13px] text-gray-400">
-        <button id="forgotBtn" class="hover:text-gray-200 underline underline-offset-4">Forgot password?</button>
+          <button id="finalizeBtn" class="btn-main rounded-xl px-5 py-2 font-bold disabled:opacity-60 disabled:cursor-not-allowed" disabled>
+            Finalize & Download PDF
+          </button>
+        </div>
+        <p id="errorMsg" class="hidden mt-3 text-sm text-red-600"></p>
       </div>
     </div>
   </div>
 
+  <!-- Success Modal -->
+  <div id="successModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-6 z-30">
+      <div class="card rounded-2xl p-10 text-center w-full max-w-md">
+        <div class="mx-auto w-20 h-20 rounded-full grid place-items-center bg-green-100 border border-green-200">
+          <span class="material-icons text-green-600 text-4xl">check_circle</span>
+        </div>
+        <h3 class="text-2xl font-extrabold mt-4 mb-1 text-gray-900">Thank you for signing!</h3>
+        <p class="text-sm text-gray-500">Your contract is complete. A PDF has been downloaded, and a copy has been sent to the agency.</p>
+        <button id="doneBtn" class="mt-6 btn-main w-full py-2.5 rounded-xl font-bold">Done</button>
+      </div>
+  </div>
+
+
   <!-- Firebase (modular v12) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged, signInWithEmailAndPassword,
-      sendPasswordResetEmail
-    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    const { jsPDF } = window.jspdf;
 
-    // ✅ Using your actual project (no placeholders)
     const firebaseConfig = {
       apiKey: "AIzaSyBl-_h0gZvIwKqudXq-Tj4X3O9PzVYml3A",
       authDomain: "viraldosemodels.firebaseapp.com",
@@ -87,104 +94,214 @@
       appId: "1:1067901876974:web:28e63a8fda4224967c91ff"
     };
 
-    const app  = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
 
-    const $  = (s, r=document) => r.querySelector(s);
-    const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+    const $ = s => document.querySelector(s);
+    const loading = $('#loading');
+    const content = $('#content');
+    const successModal = $('#successModal');
+    const preview = $('#preview');
+    const finalizeBtn = $('#finalizeBtn');
+    const confirmBox  = $('#confirmBox');
+    const errorMsg    = $('#errorMsg');
 
-    const form    = $('#loginForm');
-    const emailEl = $('#email');
-    const passEl  = $('#password');
-    const errEl   = $('#errorMessage');
-    const btn     = $('#signinBtn');
-    const togglePwBtn = $('#togglePw');
-    const forgotBtn   = $('#forgotBtn');
+    let pad, contract;
+    
+    // --- FIX: Updated terms and conditions ---
+    const terms = [
+      'This Model Agreement ("Agreement") is made between VD Smedia ("Agency") and the undersigned model ("Model") as of the date of signing.',
+      "1. Parties Involved: This Agreement is between VD Smedia, a marketing agency based in the UAE, and the individual model named below.",
+      "2. Scope of Work: The Model agrees to participate in photo and/or video shoots as arranged by VD Smedia for its clients' content marketing needs.",
+      "3. Usage Rights: The Model grants VD Smedia and its clients perpetual, worldwide, and unrestricted rights to use all produced content for any purpose, including commercial, advertising, editorial, and social media, without any time limit.",
+      "4. Compensation: The Model shall be compensated as agreed upon before each project. Payment details will be specified per project basis.",
+      "5. Work Schedule & Deliverables: The shoot schedule, location, and expectations will be communicated and agreed upon before each session.",
+      "6. Confidentiality Clause: The Model agrees to keep all information related to the shoot, client, project, or content strictly confidential. The Model shall not disclose or share any behind-the-scenes content or final deliverables on social media or elsewhere unless written permission is provided by VD Smedia.",
+      "7. Content Ownership: All content created during the shoot shall remain the sole property of VD Smedia and/or its clients. The Model waives any rights, claims, or approvals over the content.",
+      "8. Model Release: The Model grants full rights to be photographed and/or recorded and waives any right to inspect or approve the final content.",
+      "9. Code of Conduct: The Model agrees to behave professionally, arrive on time, and follow reasonable directions provided during the shoot.",
+      "10. Termination Clause: VD Smedia may terminate this agreement at any time if the Model breaches any of its terms, including failure to appear, unprofessional conduct, or violation of confidentiality.",
+      "11. Legal & Jurisdiction: This Agreement shall be governed by the laws of the United Arab Emirates. Any disputes shall be settled in a court of competent jurisdiction in the UAE.",
+      "12. Signatures: By signing below, both parties agree to the terms and conditions of this agreement"
+    ];
 
-    // If already signed in, go straight to admin
-    onAuthStateChanged(auth, (user) => {
-      if (user) window.location.href = 'ModelArea.html';
-    });
+    function scaleCanvasToDPR(canvas) {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width  = Math.floor(rect.width  * ratio);
+      canvas.height = Math.floor(rect.height * ratio);
+      const ctx = canvas.getContext('2d');
+      ctx.scale(ratio, ratio);
+      if (pad) {
+        pad.clear();
+      }
+    }
 
-    togglePwBtn.addEventListener('click', () => {
-      const isPwd = passEl.type === 'password';
-      passEl.type = isPwd ? 'text' : 'password';
-      togglePwBtn.querySelector('.material-icons').textContent = isPwd ? 'visibility_off' : 'visibility';
-      passEl.focus();
-    });
-
-    function setLoading(isLoading) {
-      btn.disabled = isLoading;
-      btn.innerHTML = isLoading
-        ? `<span class="inline-flex items-center justify-center gap-2">
-             <span class="material-icons animate-spin">progress_activity</span> Signing in…
-           </span>`
-        : `<span class="inline-flex items-center justify-center gap-2">
-             <span class="material-icons text-base">login</span> Sign In
-           </span>`;
+    function setFinalizeEnabled() {
+      const ok = !pad.isEmpty() && confirmBox.checked;
+      finalizeBtn.disabled = !ok;
     }
 
     function showError(msg) {
-      errEl.textContent = msg;
-      errEl.classList.remove('hidden');
+      errorMsg.textContent = msg;
+      errorMsg.classList.remove('hidden');
     }
 
-    function mapFirebaseError(e) {
-      const code = (e.code || '').toLowerCase();
-      if (code.includes('invalid-email')) return 'Please enter a valid email address.';
-      if (code.includes('user-not-found')) return 'No account found for this email.';
-      if (code.includes('wrong-password')) return 'Incorrect password. Please try again.';
-      if (code.includes('too-many-requests')) return 'Too many attempts. Try again later.';
-      if (code.includes('network-request-failed')) return 'Network error. Check your connection and try again.';
-      return 'Sign-in failed. Please try again.';
+    document.addEventListener('DOMContentLoaded', init);
+
+    async function init() {
+      const params = new URLSearchParams(location.search);
+      const id = params.get('contractId');
+
+      if (!id) {
+        loading.innerHTML = `<h2 class="text-2xl font-extrabold text-red-600">Invalid Link</h2><p class="text-gray-500">No contractId provided.</p>`;
+        return;
+      }
+
+      const ref = doc(db, 'contracts', id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        loading.innerHTML = `<h2 class="text-2xl font-extrabold text-red-600">Not Found</h2><p class="text-gray-500">This contract no longer exists.</p>`;
+        return;
+      }
+
+      const data = snap.data();
+      contract = { id, ...data };
+
+      if ((data.status || '').toLowerCase().startsWith('signed')) {
+        loading.innerHTML = `<h2 class="text-2xl font-extrabold text-yellow-500">Already Completed</h2>
+                             <p class="text-gray-500">This contract has already been signed.</p>`;
+        return;
+      }
+
+      loading.classList.add('hidden');
+      content.classList.remove('hidden');
+      renderPreview(contract);
+
+      const canvas = document.getElementById('modelPad');
+      pad = new SignaturePad(canvas, {
+        minWidth: 0.6,
+        maxWidth: 2.4,
+        penColor: '#000000',
+        backgroundColor: '#ffffff'
+      });
+
+      scaleCanvasToDPR(canvas);
+
+      window.addEventListener('resize', () => {
+        const data = pad.toData();
+        scaleCanvasToDPR(canvas);
+        pad.fromData(data);
+      });
+
+      document.getElementById('clearSig').addEventListener('click', () => {
+        pad.clear();
+        setFinalizeEnabled();
+      });
+      ['pointerup', 'mouseup', 'touchend'].forEach(evt =>
+        canvas.addEventListener(evt, () => setFinalizeEnabled())
+      );
+      confirmBox.addEventListener('change', setFinalizeEnabled);
+
+      finalizeBtn.addEventListener('click', finalize);
+      $('#doneBtn').addEventListener('click', () => {
+          successModal.classList.add('hidden');
+          successModal.classList.remove('flex');
+          content.innerHTML = `<div class="text-center p-8"><h2 class="text-2xl font-bold text-gray-800">Thank You</h2><p class="text-gray-500">This window can now be closed.</p></div>`;
+      });
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errEl.classList.add('hidden');
+    function renderPreview(c) {
+      const amount = Number(c.amount || 0);
+      const commission = Number(c.commission || 0);
+      preview.innerHTML = `
+        <h4 class="text-lg font-bold mb-2 text-gray-900">Contract Details</h4>
+        <div class="grid sm:grid-cols-2 gap-3 text-sm">
+          <div><span class="text-gray-500">Model</span><div class="text-gray-800 font-medium">${c.modelName}</div></div>
+          <div><span class="text-gray-500">Agency Representative</span><div class="text-gray-800 font-medium">${c.agencyRepresentative}</div></div>
+          <div><span class="text-gray-500">Date</span><div class="text-gray-800 font-medium">${c.contractDate}</div></div>
+          <div><span class="text-gray-500">Amount</span><div class="text-gray-800 font-medium">$${amount.toLocaleString()}</div></div>
+          <div><span class="text-gray-500">Commission %</span><div class="text-gray-800 font-medium">${commission}%</div></div>
+        </div>
+        <hr class="my-4 border-gray-200"/>
+        <h5 class="font-semibold mb-2 text-gray-900">Terms & Conditions</h5>
+        <ul class="list-decimal ml-5 space-y-2 text-sm text-gray-600">
+          ${terms.map(t => `<li>${t.replace(/^[0-9]+\\.\\s?/, '')}</li>`).join('')}
+        </ul>
+        <hr class="my-4 border-gray-200"/>
+        <h5 class="font-semibold mb-2 text-gray-900">Agency Representative Signature (Preview)</h5>
+        <img src="${c.adminSignature}" class="max-w-xs rounded border border-gray-200 bg-white"/>
+      `;
+    }
 
-      const email = emailEl.value.trim();
-      const pass  = passEl.value;
-
-      if (!email || !pass) {
-        showError('Email and password are required.');
+    async function finalize() {
+      errorMsg.classList.add('hidden');
+      if (pad.isEmpty() || !confirmBox.checked) {
+        showError('Please sign and tick the confirmation box.');
         return;
       }
 
       try {
-        setLoading(true);
-        const { user } = await signInWithEmailAndPassword(auth, email, pass);
-        // Store minimal session info if you need it:
-        sessionStorage.setItem('user', JSON.stringify({ uid: user.uid, email: user.email }));
-        window.location.href = 'ModelArea.html';
+        finalizeBtn.disabled = true;
+        finalizeBtn.textContent = 'Processing...';
+
+        const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+        const margin = 40;
+        let y = margin;
+
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(18);
+        pdf.text('Model Agreement — VD Smedia', 297.5, y, { align: 'center' }); y += 22;
+
+        pdf.setFont('helvetica','normal'); pdf.setFontSize(11);
+        const intro = terms[0]; // Use the first line as the intro
+        pdf.text(intro, margin, y, { maxWidth: 515 }); y += (pdf.splitTextToSize(intro, 515).length * 14) + 10;
+
+        pdf.setFontSize(10);
+        for (let i = 1; i < terms.length; i++) { // Start from the second term
+          const termText = terms[i];
+          const lines = pdf.splitTextToSize(termText, 515);
+          pdf.text(lines, margin, y);
+          y += (lines.length * 12) + 6;
+          if (y > 700) { pdf.addPage(); y = margin; }
+        }
+
+        // --- FIX: Move signatures to the bottom of the page ---
+        y = pdf.internal.pageSize.height - 150; 
+
+        pdf.setFont('helvetica','bold'); pdf.text('Model', margin, y);
+        pdf.text('Agency', 320, y); y += 16;
+
+        const modelSig = pad.toDataURL('image/png');
+        try { pdf.addImage(modelSig, 'PNG', margin, y, 200, 50); } catch {}
+        try { pdf.addImage(contract.adminSignature, 'PNG', 320, y, 200, 50); } catch {}
+        y += 62;
+
+        pdf.setFont('helvetica','normal');
+        pdf.text(`Signed by: ${contract.modelName}`, margin, y); pdf.text(`Signed by: ${contract.agencyRepresentative}`, 320, y);
+        y += 14;
+        pdf.text(`Date: ${contract.contractDate}`, margin, y); pdf.text(`Date: ${contract.contractDate}`, 320, y);
+
+        const ref = doc(db, 'contracts', contract.id);
+        await setDoc(ref, {
+          modelSignature: modelSig,
+          status: `Signed by ${contract.modelName}`,
+          completedAt: serverTimestamp()
+        }, { merge: true });
+
+        pdf.save(`Signed-Contract-${contract.modelName}.pdf`);
+
+        content.classList.add('hidden');
+        successModal.classList.remove('hidden');
+        successModal.classList.add('flex');
+
       } catch (err) {
         console.error(err);
-        showError(mapFirebaseError(err));
+        showError('Failed to finalize. Please try again.');
       } finally {
-        setLoading(false);
+        finalizeBtn.disabled = false;
+        finalizeBtn.textContent = 'Finalize & Download PDF';
       }
-    });
-
-    forgotBtn.addEventListener('click', async () => {
-      errEl.classList.add('hidden');
-      const email = emailEl.value.trim();
-      if (!email) {
-        showError('Enter your email above, then click Forgot password.');
-        return;
-      }
-      try {
-        await sendPasswordResetEmail(auth, email);
-        errEl.classList.remove('text-red-300');
-        errEl.classList.add('text-green-300');
-        errEl.textContent = 'Password reset email sent.';
-        errEl.classList.remove('hidden');
-      } catch (err) {
-        console.error(err);
-        errEl.classList.remove('text-green-300');
-        errEl.classList.add('text-red-300');
-        showError(mapFirebaseError(err));
-      }
-    });
+    }
   </script>
 </body>
 </html>
