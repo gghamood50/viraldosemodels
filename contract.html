@@ -1,263 +1,307 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Your Contract</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    <style type="text/tailwindcss">
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f7f8fa;
-        }
-        :root {
-            --primary-color: #FFE500;
-            --primary-color-hover: #e6cf00;
-        }
-        .main-btn { background-color: var(--primary-color); color: #1a202c; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); transition: all 0.2s ease-in-out; }
-        .main-btn:hover { background-color: var(--primary-color-hover); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.1); }
-        .signature-pad {
-            border: 2px dashed #ccc;
-            border-radius: 0.5rem;
-            cursor: crosshair;
-        }
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            border-radius: 0.5rem;
-            color: white;
-            font-weight: 500;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 2000;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-        .notification.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .notification.success {
-            background-color: #48bb78;
-        }
-        .notification.error {
-            background-color: #f56565;
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Viral Dose Models — Contract</title>
+
+  <!-- Tailwind + fonts + icons -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+  <!-- jsPDF & SignaturePad -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+  <style>
+    :root { --vdm-yellow:#FFE500; }
+    body { font-family: Inter, system-ui, sans-serif; }
+    .card { background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+    .btn-main { background:var(--vdm-yellow); color:#101013; }
+    #modelPad {
+        background-color: #ffffff;
+        border-radius: 0.75rem; /* rounded-xl */
+        border: 1px solid #d1d5db;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 p-8">
-    <div id="model-signing-page" class="max-w-4xl mx-auto">
-        <div class="bg-white p-8 rounded-xl shadow-lg">
-            <div id="loading-state">
-                <h2 class="text-2xl font-bold text-gray-700">Loading contract...</h2>
-                <p class="text-gray-500">Please wait a moment.</p>
-            </div>
+<body class="min-h-screen bg-gray-100 text-gray-800 p-4 md:p-6">
 
-            <div id="signing-content" class="hidden">
-                <h2 class="text-3xl font-bold mb-2">Review and Sign Your Contract</h2>
-                <p class="text-gray-500 mb-6">Please review the contract details below and provide your signature.</p>
-                
-                <div id="contract-preview" class="border rounded-lg p-6 mb-8 bg-gray-50">
-                    <!-- Contract details will be injected here -->
-                </div>
-
-                <h3 class="text-xl font-bold mb-4">Your Signature</h3>
-                <div class="bg-white p-4 border rounded-lg">
-                    <canvas id="model-signature-pad" class="signature-pad w-full h-48"></canvas>
-                </div>
-                <div class="flex justify-end items-center space-x-4 mt-4">
-                    <button id="clear-model-signature" class="bg-gray-200 text-gray-700 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg transition">Clear</button>
-                    <button id="submit-model-signature" class="main-btn">Apply Signature & Finalize</button>
-                </div>
-            </div>
-        </div>
+  <div class="max-w-4xl mx-auto">
+    <!-- Loading -->
+    <div id="loading" class="card rounded-2xl p-8">
+      <h2 class="text-2xl font-extrabold text-gray-900">Loading contract…</h2>
+      <p class="text-gray-500">Please wait a moment.</p>
     </div>
-    <div id="notification-container"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Content -->
+    <div id="content" class="hidden card rounded-2xl p-6 md:p-8">
+      <h2 class="text-2xl md:text-3xl font-extrabold mb-1 text-gray-900">Review & Sign</h2>
+      <p class="text-sm text-gray-500 mb-6">Please review the details, then sign and confirm to finalize.</p>
 
-        const { jsPDF } = window.jspdf;
-        let modelSignaturePad;
-        let db;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+      <!-- Preview -->
+      <div id="preview" class="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6"></div>
 
-        const contractTerms = [
-            "1. Parties Involved: This Agreement is between VD Smedia, a marketing agency based in the UAE, and the individual model named below.",
-            "2. Scope of Work: The Model agrees to participate in photo and/or video shoots as arranged by VD Smedia for its clients' content marketing needs.",
-            "3. Usage Rights: The Model grants VD Smedia and its clients perpetual, worldwide, and unrestricted rights to use all produced content for any purpose, including commercial, advertising, editorial, and social media, without any time limit.",
-            "4. Compensation: The Model shall be compensated as agreed upon before each project. Payment details will be specified per project basis.",
-            "5. Work Schedule & Deliverables: The shoot schedule, location, and expectations will be communicated and agreed upon before each session.",
-            "6. Confidentiality Clause: The Model agrees to keep all information related to the shoot, client, project, or content strictly confidential. The Model shall not disclose or share any behind-the-scenes content or final deliverables on social media or elsewhere unless written permission is provided by VD Smedia.",
-            "7. Content Ownership: All content created during the shoot shall remain the sole property of VD Smedia and/or its clients. The Model waives any rights, claims, or approvals over the content.",
-            "8. Model Release: The Model grants full rights to be photographed and/or recorded and waives any right to inspect or approve the final content.",
-            "9. Code of Conduct: The Model agrees to behave professionally, arrive on time, and follow reasonable directions provided during the shoot.",
-            "10. Termination Clause: VD Smedia may terminate this agreement at any time if the Model breaches any of its terms, including failure to appear, unprofessional conduct, or violation of confidentiality.",
-            "11. Legal & Jurisdiction: This Agreement shall be governed by the laws of the United Arab Emirates. Any disputes shall be settled in a court of competent jurisdiction in the UAE.",
-            "12. Signatures: By signing below, both parties agree to the terms and conditions of this agreement."
-        ];
+      <!-- Signature -->
+      <div>
+        <h3 class="text-xl font-bold mb-2 text-gray-900">Your Signature</h3>
+        <div>
+          <canvas id="modelPad" class="w-full h-48 md:h-56"></canvas>
+        </div>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mt-3">
+          <div class="flex items-center gap-2">
+            <button id="clearSig" class="rounded-xl px-4 py-2 bg-gray-200 hover:bg-gray-300 border border-gray-300 text-gray-800">Clear</button>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input id="confirmBox" type="checkbox" class="accent-[var(--vdm-yellow)]">
+              <span>I confirm this is my signature.</span>
+            </label>
+          </div>
+          <button id="finalizeBtn" class="btn-main rounded-xl px-5 py-2 font-bold disabled:opacity-60 disabled:cursor-not-allowed" disabled>
+            Finalize & Download PDF
+          </button>
+        </div>
+        <p id="errorMsg" class="hidden mt-3 text-sm text-red-600"></p>
+      </div>
+    </div>
+  </div>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const firebaseConfig = {
-                apiKey: "AIzaSyCJOdrRcCU29DpuLBC7HEuQoeOiUuO-lcg",
-                authDomain: "viral-dose-media.firebaseapp.com",
-                projectId: "viral-dose-media",
-                storageBucket: "viral-dose-media.firebasestorage.app",
-                messagingSenderId: "1019850695051",
-                appId: "1:1019850695051:web:82fe957a707654561c0f8e"
-            };
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
+  <!-- Success Modal -->
+  <div id="successModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-6 z-30">
+      <div class="card rounded-2xl p-10 text-center w-full max-w-md">
+        <div class="mx-auto w-20 h-20 rounded-full grid place-items-center bg-green-100 border border-green-200">
+          <span class="material-icons text-green-600 text-4xl">check_circle</span>
+        </div>
+        <h3 class="text-2xl font-extrabold mt-4 mb-1 text-gray-900">Thank you for signing!</h3>
+        <p class="text-sm text-gray-500">Your contract is complete. A PDF has been downloaded, and a copy has been sent to the agency.</p>
+        <button id="doneBtn" class="mt-6 btn-main w-full py-2.5 rounded-xl font-bold">Done</button>
+      </div>
+  </div>
 
-            const modelSignatureCanvas = document.getElementById('model-signature-pad');
-            modelSignaturePad = new SignaturePad(modelSignatureCanvas);
-            
-            document.getElementById('clear-model-signature').addEventListener('click', () => modelSignaturePad.clear());
-            document.getElementById('submit-model-signature').addEventListener('click', submitSignature);
-            
-            checkForModelSigningLink();
-        });
 
-        async function checkForModelSigningLink() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const contractId = urlParams.get('contractId');
-            if (contractId) {
-                const docRef = doc(db, `contracts`, contractId);
-                try {
-                    const docSnap = await getDoc(docRef);
+  <!-- Firebase (modular v12) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    const { jsPDF } = window.jspdf;
 
-                    if (docSnap.exists() && docSnap.data().status === 'Awaiting Model Signature') {
-                        renderModelSigningPage({id: docSnap.id, ...docSnap.data()});
-                    } else {
-                        showNotification("Contract not found or already signed.", "error");
-                        document.getElementById('loading-state').innerHTML = `<h2 class="text-2xl font-bold text-red-600">Error</h2><p class="text-gray-500">This contract link is invalid or the contract has already been completed.</p>`;
-                    }
-                } catch (error) {
-                    console.error("Error fetching contract:", error);
-                    showNotification("Could not load contract. Please check the link and try again.", "error");
-                    document.getElementById('loading-state').innerHTML = `<h2 class="text-2xl font-bold text-red-600">Error</h2><p class="text-gray-500">Could not load the contract at this time.</p>`;
-                }
-            } else {
-                document.getElementById('loading-state').innerHTML = `<h2 class="text-2xl font-bold text-red-600">Invalid Link</h2><p class="text-gray-500">No contract ID was provided in the link.</p>`;
-            }
+    const firebaseConfig = {
+      apiKey: "AIzaSyBl-_h0gZvIwKqudXq-Tj4X3O9PzVYml3A",
+      authDomain: "viraldosemodels.firebaseapp.com",
+      projectId: "viraldosemodels",
+      storageBucket: "viraldosemodels.firebasestorage.app",
+      messagingSenderId: "1067901876974",
+      appId: "1:1067901876974:web:28e63a8fda4224967c91ff"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    const $ = s => document.querySelector(s);
+    const loading = $('#loading');
+    const content = $('#content');
+    const successModal = $('#successModal');
+    const preview = $('#preview');
+    const finalizeBtn = $('#finalizeBtn');
+    const confirmBox  = $('#confirmBox');
+    const errorMsg    = $('#errorMsg');
+
+    let pad, contract;
+    
+    // --- FIX: Updated terms and conditions ---
+    const terms = [
+      'This Model Agreement ("Agreement") is made between VD Smedia ("Agency") and the undersigned model ("Model") as of the date of signing.',
+      "1. Parties Involved: This Agreement is between VD Smedia, a marketing agency based in the UAE, and the individual model named below.",
+      "2. Scope of Work: The Model agrees to participate in photo and/or video shoots as arranged by VD Smedia for its clients' content marketing needs.",
+      "3. Usage Rights: The Model grants VD Smedia and its clients perpetual, worldwide, and unrestricted rights to use all produced content for any purpose, including commercial, advertising, editorial, and social media, without any time limit.",
+      "4. Compensation: The Model shall be compensated as agreed upon before each project. Payment details will be specified per project basis.",
+      "5. Work Schedule & Deliverables: The shoot schedule, location, and expectations will be communicated and agreed upon before each session.",
+      "6. Confidentiality Clause: The Model agrees to keep all information related to the shoot, client, project, or content strictly confidential. The Model shall not disclose or share any behind-the-scenes content or final deliverables on social media or elsewhere unless written permission is provided by VD Smedia.",
+      "7. Content Ownership: All content created during the shoot shall remain the sole property of VD Smedia and/or its clients. The Model waives any rights, claims, or approvals over the content.",
+      "8. Model Release: The Model grants full rights to be photographed and/or recorded and waives any right to inspect or approve the final content.",
+      "9. Code of Conduct: The Model agrees to behave professionally, arrive on time, and follow reasonable directions provided during the shoot.",
+      "10. Termination Clause: VD Smedia may terminate this agreement at any time if the Model breaches any of its terms, including failure to appear, unprofessional conduct, or violation of confidentiality.",
+      "11. Legal & Jurisdiction: This Agreement shall be governed by the laws of the United Arab Emirates. Any disputes shall be settled in a court of competent jurisdiction in the UAE.",
+      "12. Signatures: By signing below, both parties agree to the terms and conditions of this agreement"
+    ];
+
+    function scaleCanvasToDPR(canvas) {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width  = Math.floor(rect.width  * ratio);
+      canvas.height = Math.floor(rect.height * ratio);
+      const ctx = canvas.getContext('2d');
+      ctx.scale(ratio, ratio);
+      if (pad) {
+        pad.clear();
+      }
+    }
+
+    function setFinalizeEnabled() {
+      const ok = !pad.isEmpty() && confirmBox.checked;
+      finalizeBtn.disabled = !ok;
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    async function init() {
+      const params = new URLSearchParams(location.search);
+      const id = params.get('contractId');
+
+      if (!id) {
+        loading.innerHTML = `<h2 class="text-2xl font-extrabold text-red-600">Invalid Link</h2><p class="text-gray-500">No contractId provided.</p>`;
+        return;
+      }
+
+      const ref = doc(db, 'contracts', id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        loading.innerHTML = `<h2 class="text-2xl font-extrabold text-red-600">Not Found</h2><p class="text-gray-500">This contract no longer exists.</p>`;
+        return;
+      }
+
+      const data = snap.data();
+      contract = { id, ...data };
+
+      if ((data.status || '').toLowerCase().startsWith('signed')) {
+        loading.innerHTML = `<h2 class="text-2xl font-extrabold text-yellow-500">Already Completed</h2>
+                             <p class="text-gray-500">This contract has already been signed.</p>`;
+        return;
+      }
+
+      loading.classList.add('hidden');
+      content.classList.remove('hidden');
+      renderPreview(contract);
+
+      const canvas = document.getElementById('modelPad');
+      pad = new SignaturePad(canvas, {
+        minWidth: 0.6,
+        maxWidth: 2.4,
+        penColor: '#000000',
+        backgroundColor: '#ffffff'
+      });
+
+      scaleCanvasToDPR(canvas);
+
+      window.addEventListener('resize', () => {
+        const data = pad.toData();
+        scaleCanvasToDPR(canvas);
+        pad.fromData(data);
+      });
+
+      document.getElementById('clearSig').addEventListener('click', () => {
+        pad.clear();
+        setFinalizeEnabled();
+      });
+      ['pointerup', 'mouseup', 'touchend'].forEach(evt =>
+        canvas.addEventListener(evt, () => setFinalizeEnabled())
+      );
+      confirmBox.addEventListener('change', setFinalizeEnabled);
+
+      finalizeBtn.addEventListener('click', finalize);
+      $('#doneBtn').addEventListener('click', () => {
+          successModal.classList.add('hidden');
+          successModal.classList.remove('flex');
+          content.innerHTML = `<div class="text-center p-8"><h2 class="text-2xl font-bold text-gray-800">Thank You</h2><p class="text-gray-500">This window can now be closed.</p></div>`;
+      });
+    }
+
+    function renderPreview(c) {
+      const amount = Number(c.amount || 0);
+      const commission = Number(c.commission || 0);
+      preview.innerHTML = `
+        <h4 class="text-lg font-bold mb-2 text-gray-900">Contract Details</h4>
+        <div class="grid sm:grid-cols-2 gap-3 text-sm">
+          <div><span class="text-gray-500">Model</span><div class="text-gray-800 font-medium">${c.modelName}</div></div>
+          <div><span class="text-gray-500">Agency Representative</span><div class="text-gray-800 font-medium">${c.agencyRepresentative}</div></div>
+          <div><span class="text-gray-500">Date</span><div class="text-gray-800 font-medium">${c.contractDate}</div></div>
+          <div><span class="text-gray-500">Amount</span><div class="text-gray-800 font-medium">$${amount.toLocaleString()}</div></div>
+          <div><span class="text-gray-500">Commission %</span><div class="text-gray-800 font-medium">${commission}%</div></div>
+        </div>
+        <hr class="my-4 border-gray-200"/>
+        <h5 class="font-semibold mb-2 text-gray-900">Terms & Conditions</h5>
+        <ul class="list-decimal ml-5 space-y-2 text-sm text-gray-600">
+          ${terms.map(t => `<li>${t.replace(/^[0-9]+\\.\\s?/, '')}</li>`).join('')}
+        </ul>
+        <hr class="my-4 border-gray-200"/>
+        <h5 class="font-semibold mb-2 text-gray-900">Agency Representative Signature (Preview)</h5>
+        <img src="${c.adminSignature}" class="max-w-xs rounded border border-gray-200 bg-white"/>
+      `;
+    }
+
+    async function finalize() {
+      errorMsg.classList.add('hidden');
+      if (pad.isEmpty() || !confirmBox.checked) {
+        showError('Please sign and tick the confirmation box.');
+        return;
+      }
+
+      try {
+        finalizeBtn.disabled = true;
+        finalizeBtn.textContent = 'Processing...';
+
+        const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+        const margin = 40;
+        let y = margin;
+
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(18);
+        pdf.text('Model Agreement — VD Smedia', 297.5, y, { align: 'center' }); y += 22;
+
+        pdf.setFont('helvetica','normal'); pdf.setFontSize(11);
+        const intro = terms[0]; // Use the first line as the intro
+        pdf.text(intro, margin, y, { maxWidth: 515 }); y += (pdf.splitTextToSize(intro, 515).length * 14) + 10;
+
+        pdf.setFontSize(10);
+        for (let i = 1; i < terms.length; i++) { // Start from the second term
+          const termText = terms[i];
+          const lines = pdf.splitTextToSize(termText, 515);
+          pdf.text(lines, margin, y);
+          y += (lines.length * 12) + 6;
+          if (y > 700) { pdf.addPage(); y = margin; }
         }
 
-        function renderModelSigningPage(contract) {
-            document.getElementById('loading-state').classList.add('hidden');
-            document.getElementById('signing-content').classList.remove('hidden');
+        // --- FIX: Move signatures to the bottom of the page ---
+        y = pdf.internal.pageSize.height - 150; 
 
-            const previewContainer = document.getElementById('contract-preview');
-            previewContainer.innerHTML = `
-                <h3 class="text-xl font-bold mb-4">Contract Details</h3>
-                <p><strong>Model:</strong> ${contract.modelName}</p>
-                <p><strong>Agency Representative:</strong> ${contract.agencyRepresentative}</p>
-                <p><strong>Date:</strong> ${contract.contractDate}</p>
-                <hr class="my-4">
-                <h4 class="font-bold mb-2 text-lg">Terms and Conditions</h4>
-                <ul class="list-decimal list-inside space-y-2 text-sm text-gray-600 mb-6">
-                    ${contractTerms.map(term => `<li>${term.substring(term.indexOf('.') + 2)}</li>`).join('')}
-                </ul>
-                <hr class="my-4">
-                <h4 class="font-bold mb-2">Admin Signature:</h4>
-                <img src="${contract.adminSignature}" class="border rounded-md max-w-xs">
-            `;
-            resizeCanvas(document.getElementById('model-signature-pad'), modelSignaturePad);
-        }
+        pdf.setFont('helvetica','bold'); pdf.text('Model', margin, y);
+        pdf.text('Agency', 320, y); y += 16;
 
-        async function submitSignature() {
-            if (modelSignaturePad.isEmpty()) {
-                showNotification("Please provide your signature.", "error");
-                return;
-            }
-            const urlParams = new URLSearchParams(window.location.search);
-            const contractId = urlParams.get('contractId');
-            
-            const docRef = doc(db, `contracts`, contractId);
-            const docSnap = await getDoc(docRef);
+        const modelSig = pad.toDataURL('image/png');
+        try { pdf.addImage(modelSig, 'PNG', margin, y, 200, 50); } catch {}
+        try { pdf.addImage(contract.adminSignature, 'PNG', 320, y, 200, 50); } catch {}
+        y += 62;
 
-            if (docSnap.exists()) {
-                let contract = {id: docSnap.id, ...docSnap.data()};
-                contract.modelSignature = modelSignaturePad.toDataURL();
-                contract.status = `Signed by ${contract.modelName}`;
-                
-                await setDoc(docRef, {
-                    modelName: contract.modelName,
-                    agencyRepresentative: contract.agencyRepresentative,
-                    contractDate: contract.contractDate,
-                    status: contract.status,
-                    adminSignature: contract.adminSignature,
-                    modelSignature: contract.modelSignature
-                });
-                
-                generateFinalPdf(contract);
-                showNotification("Contract signed successfully! You can now close this page.", "success");
-                document.getElementById('submit-model-signature').disabled = true;
-            }
-        }
+        pdf.setFont('helvetica','normal');
+        pdf.text(`Signed by: ${contract.modelName}`, margin, y); pdf.text(`Signed by: ${contract.agencyRepresentative}`, 320, y);
+        y += 14;
+        pdf.text(`Date: ${contract.contractDate}`, margin, y); pdf.text(`Date: ${contract.contractDate}`, 320, y);
 
-        function generateFinalPdf(contract) {
-            const doc = new jsPDF();
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text("Model Agreement - VD Smedia", 105, 20, { align: 'center' });
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`This Model Agreement ("Agreement") is made between VD Smedia ("Agency") and the undersigned model ("Model") as of the date of signing.`, 20, 35, { maxWidth: 170 });
-            
-            doc.text(contractTerms.map(t => t).join('\n\n'), 20, 50, { maxWidth: 170 });
-            
-            let finalY = 230;
+        const ref = doc(db, 'contracts', contract.id);
+        await setDoc(ref, {
+          modelSignature: modelSig,
+          status: `Signed by ${contract.modelName}`,
+          completedAt: serverTimestamp()
+        }, { merge: true });
 
-            // Column 1
-            doc.text("Model Name:", 20, finalY);
-            doc.text(contract.modelName, 20, finalY + 5);
-            doc.addImage(contract.modelSignature, 'PNG', 20, finalY + 10, 60, 15);
-            doc.text("Model Signature:", 20, finalY + 30);
-            doc.text(`Date: ${contract.contractDate}`, 20, finalY + 35);
+        pdf.save(`Signed-Contract-${contract.modelName}.pdf`);
 
+        content.classList.add('hidden');
+        successModal.classList.remove('hidden');
+        successModal.classList.add('flex');
 
-            // Column 2
-            doc.text("Agency Representative (VD Smedia):", 110, finalY);
-            doc.text(contract.agencyRepresentative, 110, finalY + 5);
-            doc.addImage(contract.adminSignature, 'PNG', 110, finalY + 10, 60, 15);
-            doc.text("Agency Signature:", 110, finalY + 30);
-            doc.text(`Date: ${contract.contractDate}`, 110, finalY + 35);
-            
-            doc.save(`Signed-Contract-${contract.modelName.replace(/\s/g, '_')}.pdf`);
-        }
-
-        function resizeCanvas(canvas, pad) {
-            const ratio =  Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            pad.clear();
-        }
-
-        const notificationContainer = document.getElementById('notification-container');
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            notificationContainer.appendChild(notification);
-
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 10);
-
-            setTimeout(() => {
-                notification.classList.remove('show');
-                notification.addEventListener('transitionend', () => notification.remove());
-            }, 5000);
-        };
-
-    </script>
+      } catch (err) {
+        console.error(err);
+        showError('Failed to finalize. Please try again.');
+      } finally {
+        finalizeBtn.disabled = false;
+        finalizeBtn.textContent = 'Finalize & Download PDF';
+      }
+    }
+  </script>
 </body>
 </html>
