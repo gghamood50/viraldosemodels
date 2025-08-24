@@ -87,7 +87,7 @@
     <!-- Main -->
     <main id="main" class="flex-1 p-4 md:p-6 overflow-y-auto">
       <!-- DASHBOARD -->
-      <section id="dashboard-page" class="space-y-4 md:space-y-6">
+      <section id="dashboard-page" class="space-y-4 md:space-y-6 flex flex-col h-full">
         <header class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 class="text-2xl md:text-3xl font-extrabold">Dashboard</h1>
@@ -120,22 +120,22 @@
           <div class="glass p-4 md:p-5 rounded-2xl hover-float">
             <div class="flex items-center justify-between">
               <div><p class="text-gray-400 text-xs md:text-sm">Profit</p><p id="statProfit" class="text-2xl md:text-3xl font-extrabold">$0</p></div>
-              <div class="w-10 h-10 md:w-11 md:h-11 grid place-items-center rounded-xl bg-white/5 border border-white/10">
-                <span class="material-icons">trending_up</span>
+              <div class="w-10 h-10 md:w-11 md:h-11 grid place-items-center rounded-xl" style="background:rgba(255,229,0,.12); border:1px solid rgba(255,229,0,.35)">
+                <span class="material-icons text-[var(--vdm-yellow)]">trending_up</span>
               </div>
             </div>
           </div>
           <div class="glass p-4 md:p-5 rounded-2xl hover-float">
             <div class="flex items-center justify-between">
               <div><p class="text-gray-400 text-xs md:text-sm">Total Models</p><p id="statModels" class="text-2xl md:text-3xl font-extrabold">0</p></div>
-              <div class="w-10 h-10 md:w-11 md:h-11 grid place-items-center rounded-xl bg-white/5 border border-white/10">
-                <span class="material-icons">face_retouching_natural</span>
+              <div class="w-10 h-10 md:w-11 md:h-11 grid place-items-center rounded-xl" style="background:rgba(255,229,0,.12); border:1px solid rgba(255,229,0,.35)">
+                <span class="material-icons text-[var(--vdm-yellow)]">face_retouching_natural</span>
               </div>
             </div>
           </div>
           <div class="glass p-4 md:p-5 rounded-2xl hover-float">
             <div class="flex items-center justify-between">
-              <div><p class="text-gray-400 text-xs md:text-sm">Daily Visitors</p><p class="text-2xl md:text-3xl font-extrabold">UPCOMING</p></div>
+              <div><p class="text-gray-400 text-xs md:text-sm">Daily Visitors</p><p class="text-2xl md:text-3xl font-extrabold text-[var(--vdm-yellow)]" style="text-shadow: 0 0 8px var(--vdm-yellow);">UPCOMING</p></div>
               <div class="w-10 h-10 md:w-11 md:h-11 grid place-items-center rounded-xl bg-white/5 border border-white/10">
                 <span class="material-icons">people</span>
               </div>
