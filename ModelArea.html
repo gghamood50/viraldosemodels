@@ -223,8 +223,9 @@
         <label class="block md:col-span-2"><span class="block text-sm mb-1">Previous Clients / Campaigns</span><textarea id="clients" rows="3" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2"></textarea></label>
         <label class="block md:col-span-2"><span class="block text-sm mb-1">Instagram or Portfolio Link</span><input id="portfolio" type="url" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2"/></label>
 
-        <label class="block"><span class="block text-sm mb-1">Profile Photo</span><input id="profilePhoto" type="file" accept="image/*" class="w-full text-sm"/></label>
-        <label class="block"><span class="block text-sm mb-1">Gallery (upload photos)</span><input id="galleryFiles" type="file" multiple accept="image/*" class="w-full text-sm"/></label>
+        <label class="block"><span class="block text-sm mb-1">Profile Photo URL (Will be refactored after database is handed over)</span><input id="profilePhotoUrl" type="url" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="https://imgur.com/..."/></label>
+        <label class="block md:col-span-2"><span class="block text-sm mb-1">Gallery URLs (one per line)(Will be refactored after database is handed over)</span><textarea id="galleryUrls" rows="3" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="https://imgur.com/...
+https://imgur.com/..."></textarea></label>
 
         <div class="md:col-span-2">
           <span class="block text-sm mb-2">Willing to Wear</span>
@@ -377,14 +378,6 @@
       setTimeout(()=>{ el.style.display='none'; }, 2200);
     };
 
-    const fileToBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-
-
     // Sidebar hover logic
     const sidebar = $('#sidebar');
     sidebar.addEventListener('mouseenter', () => document.body.classList.remove('sidebar-collapsed'));
@@ -466,16 +459,12 @@
         const existing_model = id ? models.find(m => m.id === id) : {};
         let final_data = { ...existing_model, ...form_data };
         
-        const profileFile = $('#profilePhoto').files?.[0];
-        if (profileFile) {
-          final_data.profilePhotoB64 = await fileToBase64(profileFile);
+        // Clean up old base64 data if new URL is provided
+        if (form_data.profilePhotoUrl) {
+            final_data.profilePhotoB64 = null;
         }
-
-        const galleryFiles = $('#galleryFiles').files ? [...$('#galleryFiles').files] : [];
-        if (galleryFiles.length > 0) {
-            const newGalleryB64 = await Promise.all(galleryFiles.map(fileToBase64));
-            const existingGallery = final_data.galleryB64 || [];
-            final_data.galleryB64 = [...existingGallery, ...newGalleryB64];
+        if (form_data.galleryUrls && form_data.galleryUrls.length > 0) {
+            final_data.galleryB64 = null;
         }
 
         const docRef = id ? doc(db, 'models', id) : doc(colModels());
@@ -498,6 +487,7 @@
 
     function readModelForm(){
       const wear = [...wearWrap.querySelectorAll('input:checked')].map(x=>x.value);
+      const galleryUrls = ($('#galleryUrls').value || '').split('\n').map(u => u.trim()).filter(u => u);
       return {
         fullName: $('#fullName').value.trim(),
         phoneNumber: $('#phoneNumber').value.trim(),
@@ -514,6 +504,8 @@
         commission: Number($('#commission').value || 0),
         iban: $('#iban').value.trim(),
         notes: $('#notes').value.trim(),
+        profilePhotoUrl: $('#profilePhotoUrl').value.trim(),
+        galleryUrls: galleryUrls,
       };
     }
     function resetForm(){
@@ -540,7 +532,7 @@
       for (const m of filtered){
         const card = document.createElement('div');
         card.className = 'relative overflow-hidden rounded-2xl glass hover-float cursor-pointer group';
-        const img = m.profilePhotoB64 || `https://placehold.co/600x800/1f1f28/FFFFFF?text=${encodeURIComponent(m.fullName?.charAt(0)||'M')}`;
+        const img = m.profilePhotoUrl || m.profilePhotoB64 || `https://placehold.co/600x800/1f1f28/FFFFFF?text=${encodeURIComponent(m.fullName?.charAt(0)||'M')}`;
         card.innerHTML = `
           <div class="h-64 w-full overflow-hidden">
             <img src="${img}" class="h-full w-full object-cover group-hover:scale-[1.03] transition-transform"/>
@@ -565,11 +557,13 @@
       $('#modalTitle').textContent = m.fullName || 'Model';
       const body = $('#modalBody');
 
-      const galleryHtml = (m.galleryB64||[]).slice(0,10).map(u=>`<img src="${u}" class="h-24 w-full object-cover rounded-xl border border-white/10">`).join('');
+      const galleryUrls = m.galleryUrls || m.galleryB64 || [];
+      const galleryHtml = galleryUrls.slice(0,10).map(u=>`<img src="${u}" class="h-24 w-full object-cover rounded-xl border border-white/10">`).join('');
+      const profileImg = m.profilePhotoUrl || m.profilePhotoB64 || 'https://placehold.co/600x800/1f1f28/FFFFFF?text=Image';
 
       body.innerHTML = `
         <div>
-          <img src="${m.profilePhotoB64||'https://placehold.co/600x800/1f1f28/FFFFFF?text=Image'}" class="rounded-xl border border-white/10 w-full object-cover max-h-[420px]"/>
+          <img src="${profileImg}" class="rounded-xl border border-white/10 w-full object-cover max-h-[420px]"/>
           <div class="flex gap-2 mt-3">
             <button id="editModelBtn" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10">Edit</button>
             <button id="deleteModelBtn" class="px-3 py-2 rounded-lg border border-red-500/40 text-red-300">Delete</button>
@@ -604,8 +598,13 @@
         $('#modelId').value = m.id;
         $('#formTitle').textContent = `Editing: ${m.fullName}`;
         $('#saveModelBtn').textContent='Update Model';
-        ['fullName','phoneNumber','email','nationality','languages','location','height','experience','clients','portfolio','rate','commission','iban','notes']
+        ['fullName','phoneNumber','email','nationality','languages','location','height','experience','clients','portfolio','rate','commission','iban','notes', 'profilePhotoUrl']
           .forEach(k=>{ const el=$('#'+k); if(el) el.value = m[k]??'' });
+        
+        if (m.galleryUrls) {
+          $('#galleryUrls').value = m.galleryUrls.join('\n');
+        }
+
         wearWrap.querySelectorAll('input').forEach(cb=> cb.checked = (m.willingToWear||[]).includes(cb.value));
         openModelForm();
       };
@@ -712,7 +711,7 @@
     function updateMetricsFromContracts(list){
       const signed = list.filter(c=> (c.status||'').startsWith('Signed'));
       const revenue = signed.reduce((s,c)=> s + Number(c.amount||0), 0);
-      const profit  = signed.reduce((s,c)=> s + Number(c.amount||0) * (Number(c.commission||0)/100), 0);
+      const profit  = signed.reduce((s,c)=> s + Number(c.amount||0) * (1 - (Number(c.commission||0)/100)), 0);
       $('#statRevenue').textContent = `AED ${revenue.toLocaleString()}`;
       $('#statProfit').textContent  = `AED ${profit.toLocaleString()}`;
 
@@ -723,7 +722,7 @@
         const d = new Date(c.contractDate||Date.now()); d.setHours(0,0,0,0);
         if (days && ((Date.now()-d.getTime())/86400000) > days) continue;
         const k = d.toISOString().slice(0,10);
-        const val = metric==='profit' ? Number(c.amount||0)*(Number(c.commission||0)/100) : Number(c.amount||0);
+        const val = metric==='profit' ? Number(c.amount||0)*(1 - (Number(c.commission||0)/100)) : Number(c.amount||0);
         byDay.set(k, (byDay.get(k)||0) + val);
       }
       const labels = [...byDay.keys()].sort();
