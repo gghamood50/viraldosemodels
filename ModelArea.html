@@ -282,16 +282,6 @@
           <span class="block text-sm mb-1">Date</span>
           <input id="cDate" type="date" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2"/>
         </label>
-
-        <label class="block">
-          <span class="block text-sm mb-1">Amount ($)</span>
-          <input id="cAmount" type="number" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" value="0"/>
-        </label>
-
-        <label class="block">
-          <span class="block text-sm mb-1">Commission Split (%)</span>
-          <input id="cCommission" type="number" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" value="0"/>
-        </label>
       </div>
 
       <div class="mt-5">
@@ -409,7 +399,7 @@
     }));
 
     // Wear options
-    const wearOptions = ['Traditional','Casual','Glamour','Swimwear','Lingerie'];
+    const wearOptions = ['Traditional','Casual','Glamour','Swimwear'];
     const wearWrap = $('#wearWrap');
     wearWrap.innerHTML = wearOptions.map(w => `
       <label class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 cursor-pointer">
@@ -673,7 +663,7 @@
         row.innerHTML = `
           <div>
             <div class="font-semibold">${c.modelName}</div>
-            <div class="text-sm text-gray-400">By ${c.agencyRepresentative} • ${c.contractDate} • ${c.amount?`$${c.amount}`:'$0'} • ${c.commission??0}%</div>
+            <div class="text-sm text-gray-400">By ${c.agencyRepresentative} • ${c.contractDate}</div>
             <div class="text-[12px] ${signed?'text-green-300':'text-yellow-300'}">${c.status||'—'}</div>
           </div>
           <div class="flex items-center gap-2">
@@ -833,7 +823,7 @@
         let sigData = adminSigDataURL || adminPad.toDataURL();
 
         const payload = {
-          agencyRepresentative: rep, modelName, contractDate: date, amount, commission,
+          agencyRepresentative: rep, modelName, contractDate: date,
           adminSignature: sigData, status: 'Awaiting Model Signature', createdAt: serverTimestamp()
         };
         const ref = await addDoc(colContracts(), payload);
