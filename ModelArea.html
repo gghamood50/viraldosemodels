@@ -111,7 +111,7 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <div class="glass p-4 md:p-5 rounded-2xl hover-float">
             <div class="flex items-center justify-between">
-              <div><p class="text-gray-400 text-xs md:text-sm">Revenue</p><p id="statRevenue" class="text-2xl md:text-3xl font-extrabold">$0</p></div>
+              <div><p class="text-gray-400 text-xs md:text-sm">Revenue</p><p id="statRevenue" class="text-2xl md:text-3xl font-extrabold">AED 0</p></div>
               <div class="w-10 h-10 md:w-11 md:h-11 grid place-items-center rounded-xl" style="background:rgba(255,229,0,.12); border:1px solid rgba(255,229,0,.35)">
                 <span class="material-icons text-[var(--vdm-yellow)]">attach_money</span>
               </div>
@@ -119,7 +119,7 @@
           </div>
           <div class="glass p-4 md:p-5 rounded-2xl hover-float">
             <div class="flex items-center justify-between">
-              <div><p class="text-gray-400 text-xs md:text-sm">Profit</p><p id="statProfit" class="text-2xl md:text-3xl font-extrabold">$0</p></div>
+              <div><p class="text-gray-400 text-xs md:text-sm">Profit</p><p id="statProfit" class="text-2xl md:text-3xl font-extrabold">AED 0</p></div>
               <div class="w-10 h-10 md:w-11 md:h-11 grid place-items-center rounded-xl" style="background:rgba(255,229,0,.12); border:1px solid rgba(255,229,0,.35)">
                 <span class="material-icons text-[var(--vdm-yellow)]">trending_up</span>
               </div>
@@ -232,7 +232,7 @@
         </div>
 
         <h4 class="md:col-span-2 text-lg font-semibold pt-2">Internal & Financial</h4>
-        <label class="block"><span class="block text-sm mb-1">Rate per Project/Day ($)</span><input id="rate" type="number" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2"/></label>
+        <label class="block"><span class="block text-sm mb-1">Rate per Hour (AED)</span><input id="rate" type="number" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2"/></label>
         <label class="block"><span class="block text-sm mb-1">Commission Split (%)</span><input id="commission" type="number" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2"/></label>
         <label class="block md:col-span-2"><span class="block text-sm mb-1">IBAN Number</span><input id="iban" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2"/></label>
         <label class="block md:col-span-2"><span class="block text-sm mb-1">Notes / Comments (Internal)</span><textarea id="notes" rows="3" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2"></textarea></label>
@@ -281,6 +281,16 @@
         <label class="block">
           <span class="block text-sm mb-1">Date</span>
           <input id="cDate" type="date" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2"/>
+        </label>
+
+        <label class="block">
+          <span class="block text-sm mb-1">Amount (AED)</span>
+          <input id="cAmount" type="number" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" value="0" required/>
+        </label>
+        
+        <label class="block">
+          <span class="block text-sm mb-1">Commission (%)</span>
+          <input id="cCommission" type="number" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" value="0" required/>
         </label>
       </div>
 
@@ -579,7 +589,7 @@
           </div>
           <h4 class="text-lg font-semibold pt-2">Internal</h4>
           <div class="grid sm:grid-cols-2 gap-3 text-sm">
-            <div><span class="text-gray-400">Rate</span><div>${m.rate?`$${m.rate}/day`:'—'}</div></div>
+            <div><span class="text-gray-400">Rate</span><div>${m.rate?`${m.rate} AED/hr`:'—'}</div></div>
             <div><span class="text-gray-400">Commission</span><div>${m.commission?m.commission+'%':'—'}</div></div>
             <div class="sm:col-span-2"><span class="text-gray-400">IBAN</span><div class="break-all">${m.iban||'—'}</div></div>
             <div class="sm:col-span-2"><span class="text-gray-400">Notes</span><div class="whitespace-pre-wrap">${m.notes||'—'}</div></div>
@@ -703,8 +713,8 @@
       const signed = list.filter(c=> (c.status||'').startsWith('Signed'));
       const revenue = signed.reduce((s,c)=> s + Number(c.amount||0), 0);
       const profit  = signed.reduce((s,c)=> s + Number(c.amount||0) * (Number(c.commission||0)/100), 0);
-      $('#statRevenue').textContent = `$${revenue.toLocaleString()}`;
-      $('#statProfit').textContent  = `$${profit.toLocaleString()}`;
+      $('#statRevenue').textContent = `AED ${revenue.toLocaleString()}`;
+      $('#statProfit').textContent  = `AED ${profit.toLocaleString()}`;
 
       const days = Number($('#rangeSelect').value);
       const metric = $('#chartType').value;
@@ -824,6 +834,7 @@
 
         const payload = {
           agencyRepresentative: rep, modelName, contractDate: date,
+          amount, commission,
           adminSignature: sigData, status: 'Awaiting Model Signature', createdAt: serverTimestamp()
         };
         const ref = await addDoc(colContracts(), payload);
